@@ -6,15 +6,18 @@
 
 package org.antlr.v4.runtime.atn;
 
-import org.antlr.v4.runtime.misc.AbstractEqualityComparator;
-import org.antlr.v4.runtime.misc.FlexibleHashMap;
-import org.antlr.v4.runtime.misc.MurmurHash;
-
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
+
+import org.antlr.v4.runtime.misc.AbstractEqualityComparator;
+import org.antlr.v4.runtime.misc.FlexibleHashMap;
+import org.antlr.v4.runtime.misc.MurmurHash;
+import org.antlr.v4.runtime.tree.generic.Node;
+import org.antlr.v4.runtime.tree.generic.Tree;
 
 /**
  * This enumeration defines the prediction modes available in ANTLR 4 along with
@@ -81,6 +84,10 @@ public enum PredictionMode {
 	 * behavior for syntactically-incorrect inputs.</p>
 	 */
 	LL_EXACT_AMBIG_DETECTION;
+
+    private static Tree<Integer> ambiguityTree = new Tree<Integer>();
+
+    private static int ambiguityCounter = 0;
 
 	/** A Map that uses just the state and the stack context as the key. */
 	static class AltAndContextMap extends FlexibleHashMap<ATNConfig,BitSet> {
@@ -586,15 +593,80 @@ public enum PredictionMode {
 	}
 
 	public static int getSingleViableAlt(Collection<BitSet> altsets) {
-		BitSet viableAlts = new BitSet();
-		for (BitSet alts : altsets) {
-			int minAlt = alts.nextSetBit(0);
-			viableAlts.set(minAlt);
-			if ( viableAlts.cardinality()>1 ) { // more than 1 viable alt
-				return ATN.INVALID_ALT_NUMBER;
-			}
-		}
-		return viableAlts.nextSetBit(0);
-	}
 
+        if (ambiguityTree.getCurrentRunMarker() == null) {
+            ambiguityTree.setCurrentRunMarker(ambiguityTree.getRootElement());
+        }
+
+        if (!ambiguityTree.getCurrentRunMarker().isVisited()) {
+            // find all alternatives
+            LinkedList<Integer> allAlternatives = new LinkedList<Integer>();
+            for (BitSet alts : altsets) {
+                // find all alternatives in the current alts
+                for (int i = 0; i < alts.length(); i++) {
+                    Integer currentAlternative = alts.nextSetBit(i);
+                    if (!allAlternatives.contains(currentAlternative)) {
+                        allAlternatives.add(currentAlternative);
+                    }
+                }
+            }
+            ambiguityTree.getCurrentRunMarker().addChildren(allAlternatives);
+            ambiguityTree.getCurrentRunMarker().setVisited(true);
+            ambiguityTree.setCurrentRunMarker(ambiguityTree.getCurrentRunMarker().getChildren().get(0));
+
+        } else {
+            Node<Integer> destinyNode = ambiguityTree.getNextNonVisitedNode();
+            Node<Integer> nextNode = ambiguityTree.getCurrentRunMarker().getNextNodeOnPath(destinyNode);
+            ambiguityTree.setCurrentRunMarker(nextNode);
+        }
+
+        int selectedAlternative = ambiguityTree.getCurrentRunMarker().getData();
+
+        System.out.println("Choosing between "
+            + ambiguityTree.getCurrentRunMarker().getParent().getChildren());
+        System.out.println("Selecting " + selectedAlternative);
+        ambiguityCounter++;
+        return selectedAlternative;
+    }
+
+    /**
+     * Returns the field 'hasNextRun'
+     * @return value of hasNextRun
+     * @author fkreis (05.05.2016)
+     */
+    public static boolean hasNextRun() {
+        if (!ambiguityTree.getRootElement().isVisited()) {
+            return false;
+        } else {
+            return ambiguityTree.getNextNonVisitedNode() != null;
+        }
+    }
+
+    /**
+     *
+     * @author fkreis (12.05.2016)
+     */
+    public static void updateAmbiguityDataForNextRun() {
+        ambiguityTree.setLastRunMarker(ambiguityTree.getCurrentRunMarker());
+        ambiguityTree.setCurrentRunMarker(null);
+        ambiguityCounter = 0;
+    }
+
+    /**
+     *
+     * @author fkreis (12.05.2016)
+     */
+    public static void resetAmbiguityData() {
+        ambiguityTree = new Tree<Integer>();
+        ambiguityCounter = 0;
+    }
+
+    /**
+     * Returns the field 'ambiguityCounter'
+     * @return value of ambiguityCounter
+     * @author fkreis (06.05.2016)
+     */
+    public static int getAmbiguityCounter() {
+        return ambiguityCounter;
+    }
 }
