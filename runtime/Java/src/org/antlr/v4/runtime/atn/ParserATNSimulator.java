@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
@@ -687,6 +688,28 @@ public class ParserATNSimulator extends ATNSimulator {
 								   ", predict="+PredictionMode.getUniqueAlt(altSubSets)+
 								   ", resolvesToJustOneViableAlt="+
 									   PredictionMode.resolvesToJustOneViableAlt(altSubSets));
+			}
+
+			if(D.getAltSet().size() == 2) {
+			    String ruleName1 = Recognizer.getRuleName(dfa.atnStartState.transitions.get(0).target.stateNumber);
+			    String ruleName2 = Recognizer.getRuleName(dfa.atnStartState.transitions.get(1).target.stateNumber);
+			    if(ruleName1 != null && ruleName2 != null) {
+    			    if(ruleName1.length() > ruleName2.length()) {
+    			        if(ruleName1.startsWith("fm_"+ruleName2)) {
+    			            D.getAltSet().remove(2);
+    			            for(BitSet bs : altSubSets) {
+    			                bs.flip(2);
+    			            }
+    			        }
+    			    } else {
+    			        if(ruleName2.startsWith("fm_"+ruleName1)) {
+                            D.getAltSet().remove(1);
+                            for(BitSet bs : altSubSets) {
+                                bs.flip(1);
+                            }
+                        }
+    			    }
+			    }
 			}
 
 //			System.out.println("altSubSets: "+altSubSets);

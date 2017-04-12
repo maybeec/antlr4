@@ -529,11 +529,12 @@ do {
 
 // LL(*) stuff
 
-AltBlock(choice, preamble, alts, error) ::= <<
+AltBlock(choice, preamble, alts, error, ruleStateCacheCalls) ::= <<
 setState(<choice.stateNumber>);
 _errHandler.sync(this);
 <if(choice.label)><labelref(choice.label)> = _input.LT(1);<endif>
 <preamble; separator="\n">
+<ruleStateCacheCalls:{call | <call> }; separator="\n">
 switch ( getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx) ) {
 <alts:{alt |
 case <i>:
@@ -585,6 +586,10 @@ case <i><if(!choice.ast.greedy)>+1<endif>:
 	_errHandler.sync(this);
 	_alt = getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx);
 } while ( _alt!=<choice.exitAlt> && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+>>
+
+RuleStateCacheCall(p) ::= <<
+cacheStateRulename(<p.atnState>, "<p.ruleName>");
 >>
 
 Sync(s) ::= "sync(<s.expecting.name>);"

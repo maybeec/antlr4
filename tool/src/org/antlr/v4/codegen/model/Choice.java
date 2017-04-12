@@ -7,6 +7,7 @@
 package org.antlr.v4.codegen.model;
 
 import org.antlr.v4.codegen.OutputModelFactory;
+import org.antlr.v4.codegen.model.decl.CodeBlock;
 import org.antlr.v4.codegen.model.decl.Decl;
 import org.antlr.v4.codegen.model.decl.TokenTypeDecl;
 import org.antlr.v4.misc.Utils;
@@ -32,6 +33,7 @@ public abstract class Choice extends RuleElement {
 
 	@ModelElement public List<CodeBlockForAlt> alts;
 	@ModelElement public List<SrcOp> preamble = new ArrayList<SrcOp>();
+	@ModelElement public List<RuleStateCacheCall> ruleStateCacheCalls = new ArrayList<>();
 
 	public Choice(OutputModelFactory factory,
 				  GrammarAST blkOrEbnfRootAST,
@@ -39,7 +41,23 @@ public abstract class Choice extends RuleElement {
 	{
 		super(factory, blkOrEbnfRootAST);
 		this.alts = alts;
+		extractCacheCalls(alts);
 	}
+	
+	private void extractCacheCalls(List<? extends CodeBlock> alts) {
+        for(CodeBlock alt : alts) {
+            for(SrcOp so : alt.ops) {
+                if(so instanceof InvokeRule) {
+                    ruleStateCacheCalls.add(new RuleStateCacheCall(factory, ast,
+                        ((InvokeRule) so).name, ((InvokeRule) so).stateNumber));
+                } else if(so instanceof CodeBlock) {
+                    ArrayList<CodeBlock> codeBlocks = new ArrayList<>();
+                    codeBlocks.add((CodeBlock)so);
+                    extractCacheCalls(codeBlocks);
+                }
+            }
+        }
+    }
 
 	public void addPreambleOp(SrcOp op) {
 		preamble.add(op);
