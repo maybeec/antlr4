@@ -691,20 +691,28 @@ public class ParserATNSimulator extends ATNSimulator {
 									   PredictionMode.resolvesToJustOneViableAlt(altSubSets));
 			}
 
-			if(D.getAltSet().size() == 2) {
-			    String ruleName1 = Recognizer.getRuleName(dfa.atnStartState.transitions.get(0).target.stateNumber);
-			    String ruleName2 = Recognizer.getRuleName(dfa.atnStartState.transitions.get(1).target.stateNumber);
-			    if(ruleName1 != null && ruleName2 != null) {
-    			    String metaLanguageRulePrefix = "fm_";
-                    if(ruleName1.length() > ruleName2.length()) {
-    			        if(ruleName1.startsWith(metaLanguageRulePrefix + ruleName2)) {
-    			            purgeDuplicateObjectLanguageRule(D, reach, altSubSets, 2);
+			if(D.getAltSet().size() > 1) {
+			    Map<String, Integer> ruleNamesObjLang = new HashMap<>();
+			    Map<String, Integer> ruleNamesMetaLang = new HashMap<>();
+			    for(int alt : D.getAltSet()) {
+			        String ruleName = Recognizer.getRuleName(dfa.atnStartState.transitions.get(alt-1).target.stateNumber);
+			        if(ruleName != null) {
+    			        if(ruleName.startsWith("fm_")) {
+    			            ruleNamesMetaLang.put(ruleName, alt);
+    			        } else {
+    			            ruleNamesObjLang.put(ruleName, alt);
     			        }
-    			    } else {
-    			        if(ruleName2.startsWith(metaLanguageRulePrefix + ruleName1)) {
-    			            purgeDuplicateObjectLanguageRule(D, reach, altSubSets, 1);
-                        }
-    			    }
+			        }
+			    }
+
+			    String metaLanguageRulePrefix = "fm_";
+			    for(String objLangRule : ruleNamesObjLang.keySet()) {
+			        for(String metaLangRule : ruleNamesMetaLang.keySet()) {
+			            if(metaLangRule.startsWith(metaLanguageRulePrefix + objLangRule)) {
+			                purgeDuplicateObjectLanguageRule(D, reach, altSubSets, ruleNamesObjLang.get(objLangRule));
+			                break;
+			            }
+			        }
 			    }
 			}
 
