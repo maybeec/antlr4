@@ -31,6 +31,7 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -694,19 +695,14 @@ public class ParserATNSimulator extends ATNSimulator {
 			    String ruleName1 = Recognizer.getRuleName(dfa.atnStartState.transitions.get(0).target.stateNumber);
 			    String ruleName2 = Recognizer.getRuleName(dfa.atnStartState.transitions.get(1).target.stateNumber);
 			    if(ruleName1 != null && ruleName2 != null) {
-    			    if(ruleName1.length() > ruleName2.length()) {
-    			        if(ruleName1.startsWith("fm_"+ruleName2)) {
-    			            D.getAltSet().remove(2);
-    			            for(BitSet bs : altSubSets) {
-    			                bs.flip(2);
-    			            }
+    			    String metaLanguageRulePrefix = "fm_";
+                    if(ruleName1.length() > ruleName2.length()) {
+    			        if(ruleName1.startsWith(metaLanguageRulePrefix + ruleName2)) {
+    			            purgeDuplicateObjectLanguageRule(D, reach, altSubSets, 2);
     			        }
     			    } else {
-    			        if(ruleName2.startsWith("fm_"+ruleName1)) {
-                            D.getAltSet().remove(1);
-                            for(BitSet bs : altSubSets) {
-                                bs.flip(1);
-                            }
+    			        if(ruleName2.startsWith(metaLanguageRulePrefix + ruleName1)) {
+    			            purgeDuplicateObjectLanguageRule(D, reach, altSubSets, 1);
                         }
     			    }
 			    }
@@ -788,6 +784,27 @@ public class ParserATNSimulator extends ATNSimulator {
 
 		return predictedAlt;
 	}
+
+    /**
+     * Purges the given alternative from all tracking lists/sets/arrays.
+     * @param D {@link DFAState} to be modified
+     * @param reach {@link ATNConfigSet} to be modified
+     * @param altSubSets {@link Collection} of {@link BitSet} representing the alternative's sub sets to be modified
+     * @param alternative to be purged
+     */
+    private void purgeDuplicateObjectLanguageRule(DFAState D, ATNConfigSet reach, Collection<BitSet> altSubSets, int alternative) {
+        D.getAltSet().remove(alternative);
+        for(BitSet bs : altSubSets) {
+            bs.flip(alternative);
+        }
+        Iterator<ATNConfig> it = reach.configs.iterator();
+        while (it.hasNext()) {
+            ATNConfig next = it.next();
+            if(next.alt == alternative) {
+                it.remove();
+            }
+        }
+    }
 
 	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t,
 										   boolean fullCtx)
