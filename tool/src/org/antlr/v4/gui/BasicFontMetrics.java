@@ -61,8 +61,8 @@ public abstract class BasicFontMetrics {
 	}
 
 	public double getWidth(char c, int fontSize) {
-		if ( c > MAX_CHAR || widths[c]==0 ) return widths['m']/1000.0; // return width('m')
-		return widths[c]/1000.0 * fontSize;
+		if ( c > MAX_CHAR || widths[c]==0 ) return widths['m']/700.0; // return width('m')
+		return widths[c]/700.0 * fontSize;
 	}
 
 	public double getLineHeight(int fontSize) {
