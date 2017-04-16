@@ -6,16 +6,19 @@
 
 package org.antlr.v4.runtime.atn;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.misc.AbstractEqualityComparator;
 import org.antlr.v4.runtime.misc.FlexibleHashMap;
 import org.antlr.v4.runtime.misc.MurmurHash;
+import org.antlr.v4.runtime.tree.generic.AltNode;
 import org.antlr.v4.runtime.tree.generic.Node;
 import org.antlr.v4.runtime.tree.generic.Tree;
 
@@ -85,7 +88,7 @@ public enum PredictionMode {
 	 */
 	LL_EXACT_AMBIG_DETECTION;
 
-    private static Tree<Integer> ambiguityTree = new Tree<Integer>();
+    private static Tree<AltNode> ambiguityTree = new Tree<AltNode>();
 
     private static int ambiguityCounter = 0;
 
@@ -432,8 +435,8 @@ public enum PredictionMode {
 	 * we need exact ambiguity detection when the sets look like
 	 * {@code A={{1,2}}} or {@code {{1,2},{1,2}}}, etc...</p>
 	 */
-	public static int resolvesToJustOneViableAlt(Collection<BitSet> altsets) {
-		return getSingleViableAlt(altsets);
+	public static int resolvesToJustOneViableAlt(int stateNumber,Collection<BitSet> altsets) {
+		return getSingleViableAlt(stateNumber, altsets);
 	}
 
 	/**
@@ -592,47 +595,84 @@ public enum PredictionMode {
 		return false;
 	}
 
-	public static int getSingleViableAlt(Collection<BitSet> altsets) {
+	public static int getSingleViableAlt(int stateNumber, Collection<BitSet> altsets) {
+	    
+	    BitSet viableAlts = new BitSet();
+        for (BitSet alts : altsets) {
+            int minAlt = alts.nextSetBit(0);
+            viableAlts.set(minAlt);
+            if ( viableAlts.cardinality()>1 ) { // more than 1 viable alt
+                return ATN.INVALID_ALT_NUMBER;
+            }
+        }
+        
+        BitSet previous = null;
+        for(BitSet alts : altsets) {
+            if(previous == null) {
+                previous = alts;
+                continue;
+            } else {
+                if(!alts.equals(previous)) {
+                    System.out.println("Just on alt: "+ alts);
+                    return viableAlts.nextSetBit(0); // just one alt
+                }
+            }
+        }
 
+        // -> more than one exact alternatives
+        
         if (ambiguityTree.getCurrentRunMarker() == null) {
             ambiguityTree.setCurrentRunMarker(ambiguityTree.getRootElement());
         }
 
         if (!ambiguityTree.getCurrentRunMarker().isVisited()) {
-            // find all alternatives
-            LinkedList<Integer> allAlternatives = new LinkedList<Integer>();
-            for (BitSet alts : altsets) {
-                // find all alternatives in the current alts
-                for (int i = 0; i < alts.length(); i++) {
+            if(ambiguityTree.getCurrentRunMarker().getData() == null // root
+                || ambiguityTree.getCurrentRunMarker().getData().stateNumber != stateNumber) {
+                BitSet alts = altsets.iterator().next();
+                for(int i : convertBitSet(alts)) {
                     Integer currentAlternative = alts.nextSetBit(i);
-                    if (!allAlternatives.contains(currentAlternative)) {
-                        allAlternatives.add(currentAlternative);
-                    }
+                    AltNode newChild = new AltNode(currentAlternative, stateNumber);
+                    ambiguityTree.getCurrentRunMarker().addChild(newChild);
                 }
+                ambiguityTree.getCurrentRunMarker().setVisited(true);
+                ambiguityTree.setCurrentRunMarker(ambiguityTree.getCurrentRunMarker().getChildren().get(0));
+            } else {
+                // do nothing, there seems to be indeterministic redundant calls to #getSingleViableAlt
             }
-            ambiguityTree.getCurrentRunMarker().addChildren(allAlternatives);
-            ambiguityTree.getCurrentRunMarker().setVisited(true);
-            ambiguityTree.setCurrentRunMarker(ambiguityTree.getCurrentRunMarker().getChildren().get(0));
-
-        } else {
-            Node<Integer> destinyNode = ambiguityTree.getNextNonVisitedNode();
-            Node<Integer> nextNode = ambiguityTree.getCurrentRunMarker().getNextNodeOnPath(destinyNode);
+         } else {
+            Node<AltNode> destinationNode = ambiguityTree.getNextNonVisitedNode();
+            Node<AltNode> nextNode = ambiguityTree.getCurrentRunMarker().getNextNodeOnPath(destinationNode);
             ambiguityTree.setCurrentRunMarker(nextNode);
         }
 
-        int selectedAlternative = ambiguityTree.getCurrentRunMarker().getData();
+        AltNode selectedAlternative = ambiguityTree.getCurrentRunMarker().getData();
 
         System.out.println("Choosing between "
             + ambiguityTree.getCurrentRunMarker().getParent().getChildren());
         System.out.println("Selecting " + selectedAlternative);
         ambiguityCounter++;
-        return selectedAlternative;
+        return selectedAlternative.alt;
     }
+	
+	private static List<Integer> convertBitSet(BitSet alts) {
+	    List<Integer> intAlts = new ArrayList<>();
+        int i = alts.nextSetBit(0);
+        if (i != -1) {
+            intAlts.add(i);
+            while (true) {
+                if (++i < 0) break;
+                if ((i = alts.nextSetBit(i)) < 0) break;
+                int endOfRun = alts.nextClearBit(i);
+                do { intAlts.add(i); }
+                while (++i != endOfRun);
+            }
+        }
+        return intAlts;
+	}
 
     /**
      * Returns the field 'hasNextRun'
      * @return value of hasNextRun
-     * @author fkreis (05.05.2016)
      */
     public static boolean hasNextRun() {
         if (!ambiguityTree.getRootElement().isVisited()) {
@@ -642,29 +682,20 @@ public enum PredictionMode {
         }
     }
 
-    /**
-     *
-     * @author fkreis (12.05.2016)
-     */
     public static void updateAmbiguityDataForNextRun() {
         ambiguityTree.setLastRunMarker(ambiguityTree.getCurrentRunMarker());
         ambiguityTree.setCurrentRunMarker(null);
         ambiguityCounter = 0;
     }
 
-    /**
-     *
-     * @author fkreis (12.05.2016)
-     */
     public static void resetAmbiguityData() {
-        ambiguityTree = new Tree<Integer>();
+        ambiguityTree = new Tree<AltNode>();
         ambiguityCounter = 0;
     }
 
     /**
      * Returns the field 'ambiguityCounter'
      * @return value of ambiguityCounter
-     * @author fkreis (06.05.2016)
      */
     public static int getAmbiguityCounter() {
         return ambiguityCounter;

@@ -19,7 +19,7 @@ public class Node<T> {
     private boolean visited;
 
     /**
-     * Convenience ctor to create a Node<T> with an instance of T.
+     * Convenience constructor to create a Node<T> with an instance of T.
      * @param data
      *            an instance of T.
      */
@@ -56,6 +56,13 @@ public class Node<T> {
         for (T element : elements) {
             children.add(new Node<T>(this, element));
         }
+    }
+    
+    public void addChild(T element) {
+        if (children == null) {
+            children = new ArrayList<Node<T>>();
+        }
+        children.add(new Node<T>(this, element));
     }
 
     /**
@@ -97,25 +104,25 @@ public class Node<T> {
     }
 
     /**
-     * Finds the next node on the path in the tree from the current node to the destiny node.
+     * Finds the next node on the path in the tree from the current node to the destination node.
      *
-     * @param destinyNode
+     * @param destinationNode
      *            The destiny node.
      * @return The next node on the path.
      */
-    public Node<T> getNextNodeOnPath(Node<T> destinyNode) {
-        Node<T> currentPartent = destinyNode.getParent();
+    public Node<T> getNextNodeOnPath(Node<T> destinationNode) {
+        Node<T> currentParent = destinationNode.getParent();
 
-        // if the current node is the destiny nodes parent there is no node in between
-        if (currentPartent == this) {
-            return destinyNode;
+        // if the current node is the destination node's parent there is no node in between
+        if (currentParent == this) {
+            return destinationNode;
         }
 
-        while (currentPartent != null) {
-            if (currentPartent.getParent() == this) {
-                return currentPartent;
+        while (currentParent != null) {
+            if (currentParent.getParent() == this) {
+                return currentParent;
             } else {
-                currentPartent = currentPartent.getParent();
+                currentParent = currentParent.getParent();
             }
         }
 
@@ -133,7 +140,7 @@ public class Node<T> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{").append(getData().toString()).append(",[");
+        sb.append("{").append((getData() != null ? getData() : "ROOT").toString()).append(",[");
         int i = 0;
         for (Node<T> e : getChildren()) {
             if (i > 0) {
@@ -142,7 +149,7 @@ public class Node<T> {
             sb.append(e.getData().toString());
             i++;
         }
-        sb.append("]").append("}");
+        sb.append("]").append("}").append(":").append(visited);
         return sb.toString();
     }
 

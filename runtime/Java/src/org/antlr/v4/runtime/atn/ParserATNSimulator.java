@@ -688,16 +688,17 @@ public class ParserATNSimulator extends ATNSimulator {
 				System.out.println("LL altSubSets="+altSubSets+
 								   ", predict="+PredictionMode.getUniqueAlt(altSubSets)+
 								   ", resolvesToJustOneViableAlt="+
-									   PredictionMode.resolvesToJustOneViableAlt(altSubSets));
+									   PredictionMode.resolvesToJustOneViableAlt(D.stateNumber, altSubSets));
 			}
 
 			if(D.getAltSet().size() > 1) {
 			    Map<String, Integer> ruleNamesObjLang = new HashMap<>();
 			    Map<String, Integer> ruleNamesMetaLang = new HashMap<>();
+			    String metaLanguageRulePrefix = "fm_";
 			    for(int alt : D.getAltSet()) {
 			        String ruleName = Recognizer.getRuleName(dfa.atnStartState.transitions.get(alt-1).target.stateNumber);
 			        if(ruleName != null) {
-    			        if(ruleName.startsWith("fm_")) {
+    			        if(ruleName.startsWith(metaLanguageRulePrefix)) {
     			            ruleNamesMetaLang.put(ruleName, alt);
     			        } else {
     			            ruleNamesObjLang.put(ruleName, alt);
@@ -705,7 +706,6 @@ public class ParserATNSimulator extends ATNSimulator {
 			        }
 			    }
 
-			    String metaLanguageRulePrefix = "fm_";
 			    for(String objLangRule : ruleNamesObjLang.keySet()) {
 			        for(String metaLangRule : ruleNamesMetaLang.keySet()) {
 			            if(metaLangRule.startsWith(metaLanguageRulePrefix + objLangRule)) {
@@ -725,7 +725,7 @@ public class ParserATNSimulator extends ATNSimulator {
 				break;
 			}
 			if ( mode != PredictionMode.LL_EXACT_AMBIG_DETECTION ) {
-				predictedAlt = PredictionMode.resolvesToJustOneViableAlt(altSubSets);
+				predictedAlt = PredictionMode.resolvesToJustOneViableAlt(D.stateNumber, altSubSets);
 				if ( predictedAlt != ATN.INVALID_ALT_NUMBER ) {
 					break;
 				}
@@ -737,7 +737,7 @@ public class ParserATNSimulator extends ATNSimulator {
 					 PredictionMode.allSubsetsEqual(altSubSets) )
 				{
 					foundExactAmbig = true;
-					predictedAlt = PredictionMode.getSingleViableAlt(altSubSets);
+					predictedAlt = PredictionMode.getSingleViableAlt(D.stateNumber, altSubSets);
 					break;
 				}
 				// else there are multiple non-conflicting subsets or
