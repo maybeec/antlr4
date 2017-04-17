@@ -606,19 +606,10 @@ public enum PredictionMode {
             }
         }
         
-        BitSet previous = null;
-        for(BitSet alts : altsets) {
-            if(previous == null) {
-                previous = alts;
-                continue;
-            } else {
-                if(!alts.equals(previous)) {
-                    System.out.println("Just on alt: "+ alts);
-                    return viableAlts.nextSetBit(0); // just one alt
-                }
-            }
+        if(!allSubsetsEqual(altsets)) {
+            return viableAlts.nextSetBit(0);
         }
-
+        
         // -> more than one exact alternatives
         
         if (ambiguityTree.getCurrentRunMarker() == null) {
