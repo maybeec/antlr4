@@ -27,6 +27,7 @@ public class InvokeRule extends RuleElement implements LabeledOp {
 	public String name;
 	public OrderedHashSet<Decl> labels = new OrderedHashSet<Decl>(); // TODO: should need just 1
 	public String ctxName;
+	public boolean registerMetaLangOccurrence = false;
 
 	@ModelElement public List<ActionChunk> argExprsChunks;
 
@@ -72,6 +73,11 @@ public class InvokeRule extends RuleElement implements LabeledOp {
 			labels.add(d);
 			rf.addContextDecl(ast.getAltLabel(), d);
 		}
+		
+		String metaLangPrefix = factory.getGrammar().tool.metaLangPrefix;
+        if(metaLangPrefix != null && name != null && name.startsWith(metaLangPrefix.toLowerCase())) {
+		    registerMetaLangOccurrence = true;
+        }
 	}
 
 	@Override

@@ -21,6 +21,7 @@ public class MatchToken extends RuleElement implements LabeledOp {
 	public String name;
 	public int ttype;
 	public List<Decl> labels = new ArrayList<Decl>();
+	public boolean registerMetaLangOccurrence = false;
 
 	public MatchToken(OutputModelFactory factory, TerminalAST ast) {
 		super(factory, ast);
@@ -28,6 +29,11 @@ public class MatchToken extends RuleElement implements LabeledOp {
 		CodeGenerator gen = factory.getGenerator();
 		ttype = g.getTokenType(ast.getText());
 		name = gen.getTarget().getTokenTypeAsTargetLabel(g, ttype);
+		
+		String metaLangPrefix = factory.getGrammar().tool.metaLangPrefix;
+        if(metaLangPrefix != null && name != null && name.startsWith(metaLangPrefix.toUpperCase())) {
+            registerMetaLangOccurrence = true;
+        }
 	}
 
 	public MatchToken(OutputModelFactory factory, GrammarAST ast) {

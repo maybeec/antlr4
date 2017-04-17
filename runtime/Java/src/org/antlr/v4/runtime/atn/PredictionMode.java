@@ -677,8 +677,46 @@ public enum PredictionMode {
         ambiguityTree.setLastRunMarker(ambiguityTree.getCurrentRunMarker());
         ambiguityTree.setCurrentRunMarker(null);
         ambiguityCounter = 0;
+        cleanupNonMetaLangAlternatives(ambiguityTree.getRootElement().getChildren());
     }
 
+    /**
+     * Cleanup alternatives, which just end up in different CST's of the object language. As we want to preserve the
+     * original parsing behavior of ambiguities in object language, we have to remove alternatives which result from
+     * the object language exclusively.
+     */
+    private static void cleanupNonMetaLangAlternatives(List<Node<AltNode>> children) {
+        
+        if(children == null || children.isEmpty()) return;
+        
+        boolean hasMetaLangCSTSubtree = false;
+        for(Node<AltNode> node : children) {
+            if(node.getData().hasMetaLangChildren) {
+                hasMetaLangCSTSubtree = true;
+                break;
+            }
+        }
+        
+        if(hasMetaLangCSTSubtree) {
+            for(Node<AltNode> node : children) {
+                cleanupNonMetaLangAlternatives(node.getChildren());
+            }
+        } else {
+            Iterator<Node<AltNode>> it = children.iterator();
+            // in case of no meta-lang in sub CST remove all alts besides first alt as of regular precedence parsing
+            boolean first = true;
+            while(it.hasNext()) {
+                it.next();
+                if(first) {
+                    first = false;
+                } else {
+                    it.remove();
+                }
+            }
+            cleanupNonMetaLangAlternatives(children.get(0).getChildren());
+        }
+    }
+    
     public static void resetAmbiguityData() {
         ambiguityTree = new Tree<AltNode>();
         ambiguityCounter = 0;
@@ -690,5 +728,11 @@ public enum PredictionMode {
      */
     public static int getAmbiguityCounter() {
         return ambiguityCounter;
+    }
+    
+    public static void registerMetaLangOccurrence() {
+        if(ambiguityTree.getCurrentRunMarker() != null) {
+            ambiguityTree.getCurrentRunMarker().getData().setHasMetaLangChildren(true);
+        }
     }
 }
