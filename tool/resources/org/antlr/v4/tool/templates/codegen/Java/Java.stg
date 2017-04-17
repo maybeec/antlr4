@@ -630,7 +630,6 @@ cases(ttypes) ::= <<
 
 InvokeRule(r, argExprsChunks) ::= <<
 setState(<r.stateNumber>);
-<if(r.registerMetaLangOccurrence)>PredictionMode.registerMetaLangOccurrence();<endif>
 <if(r.labels)><r.labels:{l | <labelref(l)> = }><endif><r.name>(<if(r.ast.options.p)><r.ast.options.p><if(argExprsChunks)>,<endif><endif><argExprsChunks>);
 >>
 

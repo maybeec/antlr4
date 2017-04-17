@@ -30,8 +30,8 @@ public class MatchToken extends RuleElement implements LabeledOp {
 		ttype = g.getTokenType(ast.getText());
 		name = gen.getTarget().getTokenTypeAsTargetLabel(g, ttype);
 		
-		String metaLangPrefix = factory.getGrammar().tool.metaLangPrefix;
-        if(metaLangPrefix != null && name != null && name.startsWith(metaLangPrefix.toUpperCase())) {
+		String metaLangPlaceholderTokenName = factory.getGrammar().tool.metaLangPlaceholderTokenName;
+        if(metaLangPlaceholderTokenName != null && metaLangPlaceholderTokenName.equals(name)) {
             registerMetaLangOccurrence = true;
         }
 	}
