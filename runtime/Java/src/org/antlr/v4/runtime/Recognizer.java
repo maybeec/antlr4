@@ -25,8 +25,6 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 		new WeakHashMap<Vocabulary, Map<String, Integer>>();
 	private static final Map<String[], Map<String, Integer>> ruleIndexMapCache =
 		new WeakHashMap<String[], Map<String, Integer>>();
-	private static final Map<Integer, String> stateRuleNameCache = new HashMap<>();
-
 
 	private List<ANTLRErrorListener> _listeners =
 		new CopyOnWriteArrayList<ANTLRErrorListener>() {{
@@ -265,19 +263,10 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 		_stateNumber = atnState;
 //		if ( traceATNStates ) _ctx.trace(atnState);
 	}
-	
-	public final void cacheStateRulename(int atnState, String ruleName) {
-	    stateRuleNameCache.put(atnState, ruleName);
-	}
-	
-	public static final String getRuleName(int atnState) {
-	    return stateRuleNameCache.get(atnState);
-	}
 
 	public abstract IntStream getInputStream();
 
 	public abstract void setInputStream(IntStream input);
-
 
 	public abstract TokenFactory<?> getTokenFactory();
 
