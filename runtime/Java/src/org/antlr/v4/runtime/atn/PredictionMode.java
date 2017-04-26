@@ -11,7 +11,6 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -617,19 +616,14 @@ public enum PredictionMode {
         }
 
         if (!ambiguityTree.getCurrentRunMarker().isVisited()) {
-            if(ambiguityTree.getCurrentRunMarker().getData() == null // root
-                || ambiguityTree.getCurrentRunMarker().getData().stateNumber != stateNumber) {
-                BitSet alts = altsets.iterator().next();
-                for(int i : convertBitSet(alts)) {
-                    Integer currentAlternative = alts.nextSetBit(i);
-                    AltNode newChild = new AltNode(currentAlternative, stateNumber);
-                    ambiguityTree.getCurrentRunMarker().addChild(newChild);
-                }
-                ambiguityTree.getCurrentRunMarker().setVisited(true);
-                ambiguityTree.setCurrentRunMarker(ambiguityTree.getCurrentRunMarker().getChildren().get(0));
-            } else {
-                // do nothing, there seems to be indeterministic redundant calls to #getSingleViableAlt
+            BitSet alts = altsets.iterator().next();
+            for(int i : convertBitSet(alts)) {
+                Integer currentAlternative = alts.nextSetBit(i);
+                AltNode newChild = new AltNode(currentAlternative, stateNumber);
+                ambiguityTree.getCurrentRunMarker().addChild(newChild);
             }
+            ambiguityTree.getCurrentRunMarker().setVisited(true);
+            ambiguityTree.setCurrentRunMarker(ambiguityTree.getCurrentRunMarker().getChildren().get(0));
          } else {
             Node<AltNode> destinationNode = ambiguityTree.getNextNonVisitedNode();
             Node<AltNode> nextNode = ambiguityTree.getCurrentRunMarker().getNextNodeOnPath(destinationNode);
@@ -731,8 +725,17 @@ public enum PredictionMode {
     }
     
     public static void registerMetaLangOccurrence() {
-        if(ambiguityTree.getCurrentRunMarker() != null) {
-            ambiguityTree.getCurrentRunMarker().getData().setHasMetaLangChildren(true);
+        Node<AltNode> currentNode = ambiguityTree.getCurrentRunMarker();
+        while (currentNode != null) {
+            AltNode currData = currentNode.getData();
+            if(currData != null) {
+                if (!currData.hasMetaLangChildren) {
+                    currData.setHasMetaLangChildren(true);
+                } else {
+                    break;
+                }
+            }
+            currentNode = currentNode.getParent();
         }
     }
 }
