@@ -25,7 +25,7 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 		new WeakHashMap<Vocabulary, Map<String, Integer>>();
 	private static final Map<String[], Map<String, Integer>> ruleIndexMapCache =
 		new WeakHashMap<String[], Map<String, Integer>>();
-	private static final Map<Integer, String> stateRuleNameCache = new WeakHashMap<>();
+	private static final Map<Integer, String> stateRuleNameCache = new HashMap<>();
 
 
 	private List<ANTLRErrorListener> _listeners =
