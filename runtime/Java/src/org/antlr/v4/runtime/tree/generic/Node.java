@@ -149,7 +149,10 @@ public class Node<T> {
             sb.append(e.getData().toString());
             i++;
         }
-        sb.append("]").append("}").append(":").append(visited);
+        sb.append("]").append("}");
+        if(visited) {
+            sb.append(":").append("visited");
+        }
         return sb.toString();
     }
 
