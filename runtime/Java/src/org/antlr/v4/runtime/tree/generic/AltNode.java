@@ -22,6 +22,6 @@ public class AltNode {
     
     @Override
     public String toString() {
-        return stateNumber + "::" + alt + "-" + (hasMetaLangChildren ? "hasMetaChild" : "");
+        return stateNumber + "::" + alt + (hasMetaLangChildren ? "-hasMetaChild" : "");
     }
 }
