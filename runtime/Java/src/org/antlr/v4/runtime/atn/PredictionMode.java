@@ -632,9 +632,9 @@ public enum PredictionMode {
 
         AltNode selectedAlternative = ambiguityTree.getCurrentRunMarker().getData();
 
-        System.out.println("Choosing between "
-            + ambiguityTree.getCurrentRunMarker().getParent().getChildren());
-        System.out.println("Selecting " + selectedAlternative);
+        // System.out.println("Choosing between "
+        // + ambiguityTree.getCurrentRunMarker().getParent().getChildren());
+        // System.out.println("Selecting " + selectedAlternative);
         ambiguityCounter++;
         return selectedAlternative.alt;
     }
