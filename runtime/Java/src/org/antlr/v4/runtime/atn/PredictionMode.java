@@ -712,7 +712,7 @@ public enum PredictionMode {
     }
     
     public static void resetAmbiguityData() {
-        ambiguityTree = new Tree<AltNode>();
+        ambiguityTree = new Tree<>();
         ambiguityCounter = 0;
     }
 
@@ -727,15 +727,37 @@ public enum PredictionMode {
     public static void registerMetaLangOccurrence() {
         Node<AltNode> currentNode = ambiguityTree.getCurrentRunMarker();
         while (currentNode != null) {
-            AltNode currData = currentNode.getData();
-            if(currData != null) {
-                if (!currData.hasMetaLangChildren) {
-                    currData.setHasMetaLangChildren(true);
-                } else {
-                    break;
+            if(!currentNode.isCompletelyParsed()) {
+                AltNode currData = currentNode.getData();
+                if(currData != null) {
+                    if (!currData.hasMetaLangChildren) {
+                        currData.setHasMetaLangChildren(true);
+                    } else {
+                        break;
+                    }
                 }
             }
             currentNode = currentNode.getParent();
+        }
+    }
+    
+    public static void completePotentialAmbiguousSubtree(int stateNumber) {
+        if(ambiguityTree.getCurrentRunMarker() != null) {
+            Node<AltNode> curr = ambiguityTree.getCurrentRunMarker();
+            while(curr != null && curr.getData() != null) {
+                if(curr.getData().stateNumber == stateNumber) {
+                    curr.setCompletelyParsed(true);
+                    Node<AltNode> currParent = curr.getParent();
+                    while(curr.getCstParent() == null && currParent != null) {
+                        if(!currParent.isCompletelyParsed()) {
+                            curr.setCstParent(currParent);
+                        }
+                        curr = currParent;
+                        currParent = curr.getParent();
+                    }
+                }
+                curr = curr.getCstParent();
+            }
         }
     }
 }

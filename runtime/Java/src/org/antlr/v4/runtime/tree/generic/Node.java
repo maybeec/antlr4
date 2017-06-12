@@ -15,8 +15,45 @@ public class Node<T> {
     private List<Node<T>> children;
 
     private Node<T> parent;
+    
+    /** @see #getCstParent() */
+    private Node<T> cstParent;
 
     private boolean visited;
+    
+    /** @see #isCompletelyParsed() */
+    private boolean completelyParsed;
+    
+    /**
+     * @see #isCompletelyParsed()
+     */
+    @SuppressWarnings("javadoc")
+    public void setCompletelyParsed(boolean completelyParsed) {
+        this.completelyParsed = completelyParsed;
+    }
+
+    /**
+     * States whether this node has been completely parsed with respect to the CST construction
+     * @return <code>true</code> if the CST is complete
+     */
+    public boolean isCompletelyParsed() {
+        return this.completelyParsed;
+    }
+    
+    /**
+     * @return the parent decision according to the CST construction
+     */
+    public Node<T> getCstParent() {
+        return this.cstParent;
+    }
+    
+    /**
+     * @see #getCstParent()
+     */
+    @SuppressWarnings("javadoc")
+    public void setCstParent(Node<T> cstParent) {
+        this.cstParent = cstParent;
+    }
 
     /**
      * Convenience constructor to create a Node<T> with an instance of T.
@@ -152,6 +189,9 @@ public class Node<T> {
         sb.append("]").append("}");
         if(visited) {
             sb.append(":").append("visited");
+        }
+        if(completelyParsed) {
+            sb.append(":").append("complete");
         }
         return sb.toString();
     }

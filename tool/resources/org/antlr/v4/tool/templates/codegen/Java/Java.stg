@@ -540,6 +540,7 @@ case <i>:
 	<alt>
 	break;}; separator="\n">
 }
+PredictionMode.completePotentialAmbiguousSubtree(<choice.stateNumber>);
 >>
 
 OptionalBlock(choice, alts, error) ::= <<
@@ -551,6 +552,7 @@ case <i><if(!choice.ast.greedy)>+1<endif>:
 	<alt>
 	break;}; separator="\n">
 }
+PredictionMode.completePotentialAmbiguousSubtree(<choice.stateNumber>);
 >>
 
 StarBlock(choice, alts, sync, iteration) ::= <<
@@ -562,10 +564,12 @@ while ( _alt!=<choice.exitAlt> && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT
 		<iteration>
 		<alts> <! should only be one !>
 	}
+	PredictionMode.completePotentialAmbiguousSubtree(<choice.loopBackStateNumber>);
 	setState(<choice.loopBackStateNumber>);
 	_errHandler.sync(this);
 	_alt = getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx);
 }
+PredictionMode.completePotentialAmbiguousSubtree(<choice.stateNumber>);
 >>
 
 PlusBlock(choice, alts, error) ::= <<
@@ -581,6 +585,7 @@ case <i><if(!choice.ast.greedy)>+1<endif>:
 	default:
 		<error>
 	}
+	PredictionMode.completePotentialAmbiguousSubtree(<choice.loopBackStateNumber>);
 	setState(<choice.loopBackStateNumber>); <! loopback/exit decision !>
 	_errHandler.sync(this);
 	_alt = getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx);
